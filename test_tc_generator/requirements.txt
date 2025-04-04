@@ -1,11 +1,11 @@
 streamlit>=1.29.0
 
-# langchain 관련
-git+https://github.com/langchain-ai/langchain.git@v0.1.11
-langchain-community==0.0.28
+# langchain - 검증된 안정 버전 사용 (PyPI 기반)
+langchain==0.0.353
 pydantic<2
 
-# 기타
+# 기타 패키지
+langchain-community==0.0.16  # 0.0.28은 0.1.x와 짝임
 google-generativeai>=0.3.2
 openai==1.6.0
 pandas>=2.1.0
