@@ -1,5 +1,5 @@
 streamlit>=1.29.0
-langchain==0.0.353
+git+https://github.com/langchain-ai/langchain.git@v0.0.353
 google-generativeai>=0.3.2
 openai==1.6.0
 pandas>=2.1.0
