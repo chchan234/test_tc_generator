@@ -3,7 +3,7 @@ import os
 import tempfile
 from langchain.schema import Document
 from langchain_community.document_loaders import PyMuPDFLoader, UnstructuredWordDocumentLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
