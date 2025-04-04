@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import tempfile
-from langchain_core.documents import Document
+from langchain.schema import Document
 from langchain_community.document_loaders import PyMuPDFLoader, UnstructuredWordDocumentLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import pandas as pd
