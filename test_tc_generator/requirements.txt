@@ -1,6 +1,11 @@
 streamlit>=1.29.0
-langchain==0.0.353
 
+# langchain 관련 모듈
+langchain==0.1.11
+langchain-community==0.0.28
+pydantic<2  # 호환성 유지 필수
+
+# 기타 종속성
 google-generativeai>=0.3.2
 openai==1.6.0
 pandas>=2.1.0
