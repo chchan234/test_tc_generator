@@ -127,12 +127,28 @@ def main():
     
     model_option = st.sidebar.selectbox(
         "AI 모델 선택",
-        ["Google Gemini", "OpenAI GPT-4 Turbo"]
+        [
+            # Gemini 모델들
+            "Gemini 2.5 Pro",
+            "Gemini 2.0 Flash",
+            "Gemini 2.0 Flash-Lite",
+            "Gemini 1.5 Flash",
+            "Gemini 1.5 Flash-8B",
+            "Gemini 1.5 Pro",
+            # GPT 모델들
+            "GPT-4.5 Preview",
+            "GPT-4",
+            "GPT-4 Turbo",
+            "GPT-4 Audio",
+            "ChatGPT-4",
+            "GPT-4 Mini",
+            "GPT-4 Mini Audio"
+        ]
     )
     
     api_keys = {}
     
-    if model_option == "Google Gemini":
+    if "Gemini" in model_option:
         gemini_api = st.sidebar.text_input("Google Gemini API 키 입력", type="password")
         if gemini_api:
             api_keys["gemini"] = gemini_api

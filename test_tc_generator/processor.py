@@ -7,11 +7,32 @@ from langchain_core.documents import Document
 
 # Configure API clients based on keys
 def configure_api_clients(model_option, api_keys):
-    if model_option == "Google Gemini" and "gemini" in api_keys:
+    if "Gemini" in model_option and "gemini" in api_keys:
         genai.configure(api_key=api_keys["gemini"])
-        return "gemini"
-    elif model_option == "OpenAI GPT-4 Turbo" and "openai" in api_keys:
-        return OpenAI(api_key=api_keys["openai"])
+        # Gemini 모델 매핑
+        model_mapping = {
+            "Gemini 2.5 Pro": "gemini-2.5-pro-exp-03-25",
+            "Gemini 2.0 Flash": "gemini-2.0-flash",
+            "Gemini 2.0 Flash-Lite": "gemini-2.0-flash-lite",
+            "Gemini 1.5 Flash": "gemini-1.5-flash",
+            "Gemini 1.5 Flash-8B": "gemini-1.5-flash-8b",
+            "Gemini 1.5 Pro": "gemini-1.5-pro",
+        }
+        model_name = model_mapping.get(model_option, "gemini-2.5-pro-exp-03-25")  # 기본값으로 최신 모델 사용
+        return {"model": model_name, "client": "gemini"}
+    elif "GPT" in model_option and "openai" in api_keys:
+        # GPT 모델 매핑
+        model_mapping = {
+            "GPT-4.5 Preview": "gpt-4.5-preview",
+            "GPT-4": "gpt-4",
+            "GPT-4 Turbo": "gpt-4-turbo-preview",
+            "GPT-4 Audio": "gpt-4-audio",
+            "ChatGPT-4": "gpt-4",
+            "GPT-4 Mini": "gpt-4-mini",
+            "GPT-4 Mini Audio": "gpt-4-mini-audio"
+        }
+        model_name = model_mapping.get(model_option, "gpt-4-turbo-preview")  # 기본값으로 Turbo 사용
+        return {"model": model_name, "client": OpenAI(api_key=api_keys["openai"])}
     else:
         raise ValueError("API 키가 설정되지 않았습니다.")
 
@@ -51,14 +72,14 @@ def _check_if_useful_for_testcase(content: str, model_option: str, api_client: A
     문장: {content}
     """
     
-    if model_option == "Google Gemini":
-        gemini_model = genai.GenerativeModel('gemini-pro')
+    if api_client["client"] == "gemini":
+        gemini_model = genai.GenerativeModel(api_client["model"])
         response = gemini_model.generate_content(prompt)
         answer = response.text.strip().lower()
         return "예" in answer or "yes" in answer
     else:
-        response = api_client.chat.completions.create(
-            model="gpt-4-turbo",
+        response = api_client["client"].chat.completions.create(
+            model=api_client["model"],
             messages=[
                 {"role": "system", "content": "게임 테스트케이스 생성에 유용한 문장을 판별합니다."},
                 {"role": "user", "content": prompt}
@@ -100,34 +121,27 @@ def identify_document_structure(filtered_sentences: List[Document], model_option
     JSON 형식으로만 응답해주세요.
     """
     
-    if model_option == "Google Gemini":
-        gemini_model = genai.GenerativeModel('gemini-pro')
+    if api_client["client"] == "gemini":
+        gemini_model = genai.GenerativeModel(api_client["model"])
         response = gemini_model.generate_content(prompt)
         
         try:
-            # Extract JSON from the response
             import json
             from json import JSONDecodeError
-            
-            # Try to find and parse JSON content
             response_text = response.text
-            
-            # Find JSON structure in the response
-            import re
             json_match = re.search(r'({.*})', response_text, re.DOTALL)
             if json_match:
                 structure_json = json_match.group(1)
                 return json.loads(structure_json)
             else:
-                # Fallback to default structure
                 return create_default_structure()
         except Exception as e:
             print(f"Error parsing document structure: {e}")
             return create_default_structure()
     else:
         try:
-            response = api_client.chat.completions.create(
-                model="gpt-4-turbo",
+            response = api_client["client"].chat.completions.create(
+                model=api_client["model"],
                 messages=[
                     {"role": "system", "content": "게임 기획서의 구조를 분석하여 대분류/중분류/소분류를 JSON 형식으로 제공합니다."},
                     {"role": "user", "content": prompt}
@@ -210,8 +224,8 @@ def generate_testcases(filtered_sentences: List[Document], doc_structure: Dict[s
         
         batch_testcases = []
         
-        if model_option == "Google Gemini":
-            gemini_model = genai.GenerativeModel('gemini-pro')
+        if api_client["client"] == "gemini":
+            gemini_model = genai.GenerativeModel(api_client["model"])
             response = gemini_model.generate_content(prompt)
             
             try:
@@ -234,8 +248,8 @@ def generate_testcases(filtered_sentences: List[Document], doc_structure: Dict[s
                 batch_testcases = [create_generic_testcase(s.page_content, doc_structure) for s in batch]
         else:
             try:
-                response = api_client.chat.completions.create(
-                    model="gpt-4-turbo",
+                response = api_client["client"].chat.completions.create(
+                    model=api_client["model"],
                     messages=[
                         {"role": "system", "content": "게임 기획서 내용으로부터 테스트케이스를 생성합니다."},
                         {"role": "user", "content": prompt}
@@ -340,8 +354,8 @@ def validate_testcase_quality(testcases: List[Dict[str, Any]], model_option: str
         
         score_data = {"정확성": 30, "명확성": 15, "중복성": 15, "완전성": 15, "총점": 75}  # Default scores
         
-        if model_option == "Google Gemini":
-            gemini_model = genai.GenerativeModel('gemini-pro')
+        if api_client["client"] == "gemini":
+            gemini_model = genai.GenerativeModel(api_client["model"])
             response = gemini_model.generate_content(prompt)
             
             try:
@@ -369,8 +383,8 @@ def validate_testcase_quality(testcases: List[Dict[str, Any]], model_option: str
                 print(f"Error parsing quality scores: {e}")
         else:
             try:
-                response = api_client.chat.completions.create(
-                    model="gpt-4-turbo",
+                response = api_client["client"].chat.completions.create(
+                    model=api_client["model"],
                     messages=[
                         {"role": "system", "content": "테스트케이스의 품질을 평가합니다."},
                         {"role": "user", "content": prompt}
